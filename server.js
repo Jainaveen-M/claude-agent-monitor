@@ -27,6 +27,7 @@ const MAX_INITIAL_READ = 32 * 1024 * 1024;
 const EXITED_VISIBLE_MS = 6 * 60 * 60 * 1000;
 const MAX_PROCS_PER_AGENT = 40;
 const FLOW_RECENT = 25;                 // events per agent sent for the flow view
+const SCAN_UNTRACKED = process.env.AGENTMON_UNTRACKED !== '0';
 
 // ---------------------------------------------------------------- processes
 
@@ -158,8 +159,10 @@ function toolSummary(name, input = {}) {
 }
 
 class Transcript {
-  constructor(file) {
+  // `own` marks a subagent transcript, whose lines are all sidechain lines.
+  constructor(file, own = false) {
     this.file = file;
+    this.own = own;
     this.offset = 0;
     this.leftover = Buffer.alloc(0);
     this.seq = 0;
@@ -184,7 +187,7 @@ class Transcript {
     let st;
     try { st = await fsp.stat(this.file); } catch { return; }
     this.mtime = st.mtimeMs;
-    if (st.size < this.offset) Object.assign(this, new Transcript(this.file));
+    if (st.size < this.offset) Object.assign(this, new Transcript(this.file, this.own));
     if (st.size === this.offset) return;
     let start = this.offset;
     let skipFirst = false;
@@ -222,7 +225,7 @@ class Transcript {
     try { d = JSON.parse(line); } catch { return; }
     const ts = d.timestamp ? Date.parse(d.timestamp) : null;
     if (ts) this.lastEventAt = ts;
-    const side = d.isSidechain ? true : undefined;
+    const side = d.isSidechain && !this.own ? true : undefined;
     switch (d.type) {
       case 'ai-title': if (d.aiTitle) this.title = d.aiTitle; break;
       case 'custom-title': if (d.customTitle) this.title = d.customTitle; break;
@@ -309,7 +312,7 @@ const NO_FLOW = { recent: [], rate: 0, toolCounts: {}, pendingTools: [] };
 const transcripts = new Map(); // file -> Transcript
 const TRANSCRIPT_TTL_MS = 10 * 60 * 1000;
 function transcriptFor(file) {
-  if (!transcripts.has(file)) transcripts.set(file, new Transcript(file));
+  if (!transcripts.has(file)) transcripts.set(file, new Transcript(file, file.includes(`${path.sep}subagents${path.sep}`)));
   const t = transcripts.get(file);
   t.lastUsed = Date.now();
   return t;
@@ -331,30 +334,60 @@ async function findTranscript(sessionId, cwd) {
   return null;
 }
 
-async function subagentsOf(transcriptFile) {
+async function listSubagentFiles(dir) {
+  let entries;
+  try { entries = await fsp.readdir(dir, { withFileTypes: true }); } catch { return []; }
+  const files = [];
+  for (const e of entries) {
+    if (e.isFile() && /^agent-.+\.jsonl$/.test(e.name)) files.push(e.name);
+    else if (e.isDirectory()) {
+      // Some subagents (workflows) live one folder deeper.
+      let inner = [];
+      try { inner = await fsp.readdir(path.join(dir, e.name)); } catch {}
+      for (const f of inner) if (/^agent-.+\.jsonl$/.test(f)) files.push(`${e.name}/${f}`);
+    }
+  }
+  return files;
+}
+
+function subagentState(t, parentAlive, meta, now) {
+  if (!parentAlive || meta.stoppedByUser) return 'done';
+  if (t.pending.size) return 'working';
+  const last = t.events[t.events.length - 1];
+  const age = now - (t.lastEventAt || t.mtime);
+  // A final reply with nothing after it means the subagent has handed back.
+  if (last && last.kind === 'text' && age > 4000) return 'done';
+  return age < 120000 ? 'working' : 'done';
+}
+
+async function subagentsOf(transcriptFile, parentAlive, now) {
   const dir = path.join(transcriptFile.replace(/\.jsonl$/, ''), 'subagents');
-  let files;
-  try { files = (await fsp.readdir(dir)).filter((f) => f.endsWith('.jsonl')); } catch { return []; }
   const result = [];
-  for (const f of files) {
-    const full = path.join(dir, f);
+  for (const rel of await listSubagentFiles(dir)) {
+    const full = path.join(dir, rel);
     const t = transcriptFor(full);
     await t.update();
     let meta = {};
     try { meta = JSON.parse(await fsp.readFile(full.replace(/\.jsonl$/, '.meta.json'), 'utf8')); } catch {}
+    const state = subagentState(t, parentAlive, meta, now);
+    const pending = [...t.pending.values()].pop();
     result.push({
-      id: f.replace(/\.jsonl$/, ''),
+      id: rel.replace(/\.jsonl$/, ''),
       type: meta.agentType || meta.subagent_type || null,
-      title: meta.description || t.title || t.firstPrompt || f,
+      title: meta.description || t.title || t.firstPrompt || rel,
+      state,
+      activity: state === 'done'
+        ? { label: 'Done' }
+        : pending ? { label: pending.label || pending.name, tool: pending.name, since: pending.ts } : { label: 'Thinking' },
+      startedAt: (t.events[0] && t.events[0].ts) || t.mtime,
       lastEventAt: t.lastEventAt || t.mtime,
       mtime: t.mtime,
       outputTokens: t.outputTokens,
-      lastTool: t.lastToolUse,
-      pendingTools: t.pending.size,
       logSeq: t.seq,
+      ...t.flow(now),
     });
   }
-  return result.sort((a, b) => b.mtime - a.mtime);
+  return result.sort((a, b) => b.lastEventAt - a.lastEventAt);
 }
 
 // ---------------------------------------------------------------- snapshot
@@ -457,7 +490,7 @@ async function buildSnapshot() {
       processes: tree.slice(0, MAX_PROCS_PER_AGENT).map((p) => ({ pid: p.pid, depth: p.depth, cpu: Math.round(p.cpu * 10) / 10, rss: p.rss, command: shortCommand(p.command) })),
       processCount: tree.length,
       history: hist,
-      subagents: file ? await subagentsOf(file) : [],
+      subagents: file ? await subagentsOf(file, alive, now) : [],
       ...(t ? t.flow(now) : NO_FLOW),
     });
   }
@@ -465,7 +498,7 @@ async function buildSnapshot() {
   // Claude processes with no session file (older versions, headless -p runs, etc.)
   const trackedTrees = new Set();
   for (const pid of trackedPids) for (const p of processTree(pid, procs, children)) trackedTrees.add(p.pid);
-  for (const p of procs.values()) {
+  for (const p of SCAN_UNTRACKED ? procs.values() : []) {
     if (trackedTrees.has(p.pid) || !isClaudeCommand(p.command)) continue;
     const parent = procs.get(p.ppid);
     if (parent && isClaudeCommand(parent.command)) continue;
@@ -596,7 +629,7 @@ const server = http.createServer(async (req, res) => {
     let file = entry.file;
     const sub = url.searchParams.get('sub');
     if (sub) {
-      if (!/^[\w.-]+$/.test(sub)) return sendJson(res, 400, { error: 'bad subagent id' });
+      if (!/^[\w.-]+(\/[\w.-]+)?$/.test(sub) || sub.split('/').includes('..')) return sendJson(res, 400, { error: 'bad subagent id' });
       file = path.join(entry.file.replace(/\.jsonl$/, ''), 'subagents', `${sub}.jsonl`);
     }
     const t = transcriptFor(file);

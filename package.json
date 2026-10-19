@@ -5,7 +5,8 @@
   "description": "Local dashboard for running Claude Code agents: status, current task, logs, CPU and memory.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "simulate": "node simulate.js"
   },
   "engines": {
     "node": ">=18"

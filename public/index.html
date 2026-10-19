@@ -245,7 +245,7 @@
   .anode:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
   .anode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .anode[aria-current="true"] { border-color: var(--accent-ring); box-shadow: 0 0 0 3px var(--accent-wash), var(--shadow-md); }
-  .anode.is-working::before {
+  .anode.is-working::before, .snode.is-working::before {
     content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1.5px; pointer-events: none;
     background: conic-gradient(from var(--ang), transparent 0deg 250deg, var(--accent) 320deg, transparent 360deg);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -267,6 +267,25 @@
   .an-meter .sep { color: var(--axis); }
   .an-empty { border: 1px dashed var(--border-strong); border-radius: 16px; padding: 22px 18px; text-align: center; color: var(--muted); font-size: 13px; background: var(--surface); }
   .an-empty b { display: block; font-family: var(--serif); font-size: 18px; font-weight: 400; color: var(--text); margin-bottom: 4px; }
+
+  /* subagents hang under their parent */
+  .snode {
+    position: relative; display: block; width: calc(100% - 30px); margin: -4px 0 0 30px; text-align: left; cursor: pointer;
+    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 13px; padding: 8px 12px 8px 10px;
+    box-shadow: var(--shadow-sm); font-size: 12.5px;
+  }
+  .snode:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+  .snode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .snode[aria-current="true"] { border-color: var(--accent-ring); box-shadow: 0 0 0 3px var(--accent-wash); }
+  .snode.is-done { background: var(--surface); box-shadow: none; border-style: dashed; }
+  .snode.is-done .sn-title { color: var(--text-2); }
+  .sn-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .sn-type { font-family: var(--mono); font-size: 10.5px; padding: 0 6px; border-radius: 5px; background: var(--accent-wash); color: var(--accent-text); flex: none; }
+  .snode.is-done .sn-type { background: var(--surface-2); color: var(--text-2); }
+  .sn-title { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sn-act { color: var(--text-2); margin-top: 3px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sn-act b { font-weight: 600; color: var(--accent-text); }
+  .g-done { color: var(--good); font-size: 12px; }
 
   .tnode { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 9px; border-radius: 13px; background: var(--surface-raised); border: 1px solid var(--border); box-shadow: var(--shadow-sm); position: relative; min-width: 0; }
   .tnode .ti { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); flex: none; transition: background .2s, color .2s; }
@@ -372,7 +391,9 @@
   td.cmdcell .tree { color: var(--axis); }
 
   .subs { display: grid; gap: 8px; margin-top: 10px; }
-  .sub { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; background: var(--page); border: 1px solid var(--border); min-width: 0; font-size: 13px; }
+  .sub { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer; padding: 9px 12px; border-radius: 12px; background: var(--page); border: 1px solid var(--border); min-width: 0; font-size: 13px; }
+  .sub:hover { border-color: var(--border-strong); }
+  .sub[aria-current="true"] { border-color: var(--accent-ring); background: var(--accent-wash); }
   .sub .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub .type { font-family: var(--mono); font-size: 11px; padding: 1px 7px; border-radius: 6px; background: var(--accent-wash); color: var(--accent-text); flex: none; }
   .sub .since { color: var(--muted); font-size: 12px; flex: none; }
@@ -455,6 +476,7 @@
     .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 52px auto 52px auto; padding: 22px 16px; min-height: 0; }
     .col-you { grid-column: 1; grid-row: 1; }
     .col-agents { grid-column: 1; grid-row: 3; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    .snode { width: auto; margin: 0; }
     .col-tools { grid-column: 1; grid-row: 5; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
     .ynode { flex-direction: row; width: auto; gap: 12px; padding: 10px 16px 10px 10px; text-align: left; }
     .yn-ring { width: 40px; height: 40px; margin: 0; }
@@ -647,6 +669,7 @@ const STATUS = {
   idle: { label: 'Idle', glyph: '○' },
   running: { label: 'Running', glyph: '●' },
   exited: { label: 'Exited', glyph: '■' },
+  done: { label: 'Done', glyph: '✓' },
 };
 function glyph(status) {
   if (status === 'working') return `<span class="g g-working spin" aria-hidden="true">${spinChar()}</span>`;
@@ -671,6 +694,17 @@ const CATS = [
   { id: 'other', label: 'Other tools', test: () => true, icon: ICON('<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>') },
 ];
 const catOf = (name) => CATS.find((c) => c.test(name || '')).id;
+
+// "mcp__github__search_code" -> "github · search_code"
+function shortTool(name) {
+  const m = /^mcp__(.+?)__(.+)$/.exec(name || '');
+  return m ? `${m[1]} · ${m[2]}` : name || '';
+}
+// Absolute paths shrink to their last two segments.
+function shortLabel(s) {
+  if (!s || /\s/.test(s) || !/^(\/|~\/|[A-Za-z]:\\)/.test(s)) return s || '';
+  return s.split(/[\\/]/).filter(Boolean).slice(-2).join('/');
+}
 
 // ------------------------------------------------------------ charts
 
@@ -816,7 +850,7 @@ function recordTotals(s) {
 function actText(a) {
   const act = a.activity || {};
   switch (a.status) {
-    case 'working': return act.tool ? `<b>${esc(act.tool)}</b> ${esc(act.label || '')}` : `<b>${esc(act.label || 'Working')}…</b>`;
+    case 'working': return act.tool ? `<b>${esc(shortTool(act.tool))}</b> ${esc(shortLabel(act.label))}` : `<b>${esc(act.label || 'Working')}…</b>`;
     case 'waiting': return '<b>Needs your input</b>';
     case 'idle': return `<b>Idle</b> · waiting for input${a.statusSince ? ` · ${fmtDur(now() - a.statusSince)}` : ''}`;
     case 'exited': return `<b>Exited</b> ${fmtDur(now() - (a.statusSince || a.lastEventAt || now()))} ago`;
@@ -833,6 +867,42 @@ function agentNodeHtml(a) {
     ${alive ? `<div class="an-meter"><span class="bar" title="CPU, where 100% is one core"><i style="width:${Math.min(100, a.cpu).toFixed(1)}%"></i></span><span>${fmtPct(a.cpu)} CPU</span><span class="sep">·</span><span>${fmtBytes(a.rss)}</span></div>` : ''}`;
 }
 
+const SUB_VISIBLE_MS = 2 * 60 * 1000;
+const MAX_SUBS_SHOWN = 4;
+
+// Subagents worth drawing: running ones, plus those that finished recently.
+function visibleSubs(a) {
+  if (a.status === 'exited') return [];
+  const n = now();
+  return a.subagents
+    .filter((s) => s.state === 'working' || n - s.lastEventAt < SUB_VISIBLE_MS)
+    .slice(0, MAX_SUBS_SHOWN)
+    .sort((x, y) => x.startedAt - y.startedAt);
+}
+
+function subNodeHtml(s) {
+  const working = s.state === 'working';
+  const act = s.activity || {};
+  const line = !working
+    ? `Handed back · ${fmtDur(now() - s.lastEventAt)} ago`
+    : act.tool ? `<b>${esc(shortTool(act.tool))}</b> ${esc(shortLabel(act.label))}` : `<b>${esc(act.label || 'Thinking')}…</b>`;
+  return `
+    <div class="sn-top">${glyph(working ? 'working' : 'done')}${s.type ? `<span class="sn-type">${esc(s.type)}</span>` : ''}<span class="sn-title">${esc(s.title)}</span>${working ? `<span class="an-rate">${s.rate}/min</span>` : ''}</div>
+    <div class="sn-act">${line}</div>`;
+}
+
+function flowNode(cls, key, node, onClick, hoverId) {
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = `${cls} node`;
+  el.dataset.key = key;
+  el.dataset.node = node;
+  el.addEventListener('click', onClick);
+  el.addEventListener('mouseenter', () => { state.hoverAgent = hoverId; });
+  el.addEventListener('mouseleave', () => { if (state.hoverAgent === hoverId) state.hoverAgent = null; });
+  return el;
+}
+
 function renderAgentsCol() {
   const box = $('#flow-agents');
   const agents = state.snap.agents;
@@ -841,29 +911,41 @@ function renderAgentsCol() {
     return;
   }
   box.querySelector('.an-empty')?.remove();
-  const existing = new Map([...box.querySelectorAll('.anode')].map((el) => [el.dataset.id, el]));
+  const items = [];
+  for (const a of agents) {
+    items.push({ key: a.id, a });
+    for (const s of visibleSubs(a)) items.push({ key: `${a.id}/${s.id}`, a, s });
+  }
+  const existing = new Map([...box.querySelectorAll('.anode, .snode')].map((el) => [el.dataset.key, el]));
   const keep = new Set();
-  agents.forEach((a, i) => {
-    let el = existing.get(a.id);
-    if (!el) {
-      el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'anode node';
-      el.dataset.id = a.id;
-      el.dataset.node = `agent:${a.id}`;
-      el.addEventListener('click', () => select(a.id));
-      el.addEventListener('mouseenter', () => { state.hoverAgent = a.id; });
-      el.addEventListener('mouseleave', () => { if (state.hoverAgent === a.id) state.hoverAgent = null; });
+  items.forEach(({ key, a, s }, i) => {
+    let el = existing.get(key);
+    if (s) {
+      el ||= flowNode('snode', key, `sub:${key}`, () => select(a.id, s.id), a.id);
+      const working = s.state === 'working';
+      el.classList.toggle('is-working', working);
+      el.classList.toggle('is-done', !working);
+      el.setAttribute('aria-current', String(a.id === state.selected && state.log.source === s.id));
+      el.setAttribute('aria-label', `Subagent ${s.title}, ${working ? 'working' : 'done'}. Open its transcript`);
+      el.innerHTML = subNodeHtml(s);
+    } else {
+      el ||= flowNode('anode', key, `agent:${key}`, () => select(a.id), a.id);
+      el.classList.toggle('is-working', a.status === 'working');
+      el.classList.toggle('is-exited', a.status === 'exited');
+      el.setAttribute('aria-current', String(a.id === state.selected));
+      el.setAttribute('aria-label', `${a.title}, ${STATUS[a.status]?.label || a.status}. Inspect`);
+      el.innerHTML = agentNodeHtml(a);
     }
-    el.classList.toggle('is-working', a.status === 'working');
-    el.classList.toggle('is-exited', a.status === 'exited');
-    el.setAttribute('aria-current', String(a.id === state.selected));
-    el.setAttribute('aria-label', `${a.title}, ${STATUS[a.status]?.label || a.status}. Inspect`);
-    el.innerHTML = agentNodeHtml(a);
     if (box.children[i] !== el) box.insertBefore(el, box.children[i] || null);
-    keep.add(a.id);
+    keep.add(key);
   });
-  for (const [id, el] of existing) if (!keep.has(id)) el.remove();
+  for (const [key, el] of existing) if (!keep.has(key)) el.remove();
+}
+
+// Every stream of tool activity: each live agent plus its visible subagents.
+function streams(a) {
+  if (a.status === 'exited') return [];
+  return [{ owner: a, working: a.status === 'working' }, ...visibleSubs(a).map((s) => ({ owner: s, working: s.state === 'working' }))];
 }
 
 function renderToolsCol() {
@@ -878,8 +960,12 @@ function renderToolsCol() {
   }
   const counts = {}, busy = {};
   for (const a of state.snap.agents) {
-    for (const [tool, n] of Object.entries(a.toolCounts)) counts[catOf(tool)] = (counts[catOf(tool)] || 0) + n;
-    if (a.status === 'working') for (const tool of a.pendingTools) busy[catOf(tool)] = { tool, agent: a };
+    for (const src of [a, ...a.subagents]) {
+      for (const [tool, n] of Object.entries(src.toolCounts)) counts[catOf(tool)] = (counts[catOf(tool)] || 0) + n;
+    }
+    for (const { owner, working } of streams(a)) {
+      if (working) for (const tool of owner.pendingTools) busy[catOf(tool)] = { tool };
+    }
   }
   const n = now();
   for (const c of CATS) {
@@ -890,18 +976,20 @@ function renderToolsCol() {
     el.querySelector('.tn-count').textContent = used ? `${used} call${used === 1 ? '' : 's'}` : '';
     const last = flow.lastCall.get(c.id);
     el.querySelector('.tn-last').innerHTML = busy[c.id]
-      ? `${glyph('working')} Running ${esc(busy[c.id].tool)}`
-      : last ? `${esc(last.tool)} · ${fmtDur(n - last.ts)} ago` : used ? 'Earlier in these sessions' : 'Not used yet';
+      ? `${glyph('working')} Running ${esc(shortTool(busy[c.id].tool))}`
+      : last ? `${esc(shortTool(last.tool))} · ${fmtDur(n - last.ts)} ago` : used ? 'Earlier in these sessions' : 'Not used yet';
   }
 }
 
 function renderStage() {
   renderAgentsCol();
   renderToolsCol();
-  const live = state.snap.agents.filter((a) => a.status !== 'exited');
-  const rate = live.reduce((s, a) => s + a.rate, 0);
-  const running = live.filter((a) => a.status === 'working').reduce((s, a) => s + a.pendingTools.length, 0);
-  $('#throughput').innerHTML = `<span><b>${rate}</b>events / min</span><span><b>${running}</b>tool call${running === 1 ? '' : 's'} running</span>`;
+  const all = state.snap.agents.flatMap(streams);
+  const rate = all.reduce((s, x) => s + x.owner.rate, 0);
+  const running = all.filter((x) => x.working).reduce((s, x) => s + x.owner.pendingTools.length, 0);
+  const subs = state.snap.agents.reduce((s, a) => s + visibleSubs(a).filter((x) => x.state === 'working').length, 0);
+  $('#throughput').innerHTML = `<span><b>${rate}</b>events / min</span><span><b>${running}</b>tool call${running === 1 ? '' : 's'} running</span>`
+    + (subs ? `<span><b>${subs}</b>subagent${subs === 1 ? '' : 's'} working</span>` : '');
   layoutFlow();
 }
 
@@ -931,7 +1019,12 @@ function cubic(p, u) {
 }
 
 // Two lanes per link: out above (or left), back below (or right).
-function lane(a, b, off) {
+function lane(a, b, off, shape) {
+  if (shape === 'drop') {
+    // Parent to subagent: straight down out of the parent, then into the child's side.
+    const p0 = { x: a.x + off, y: a.y }, p3 = { x: b.x, y: b.y + off };
+    return [p0, { x: p0.x, y: p0.y + (p3.y - p0.y) * 0.9 }, { x: p0.x + (p3.x - p0.x) * 0.1, y: p3.y }, p3];
+  }
   if (flow.vertical) {
     const dy = (b.y - a.y) * 0.55;
     return [{ x: a.x + off, y: a.y }, { x: a.x + off, y: a.y + dy }, { x: b.x + off, y: b.y - dy }, { x: b.x + off, y: b.y }];
@@ -958,30 +1051,40 @@ function layoutFlow() {
     return out ? { x: x + r.width, y: y + r.height / 2 } : { x, y: y + r.height / 2 };
   };
   const add = (key, a, b, props) => {
-    const mid = lane(a, b, 0);
+    const mid = lane(a, b, 0, props.shape);
     const path = new Path2D();
     path.moveTo(mid[0].x, mid[0].y);
     path.bezierCurveTo(mid[1].x, mid[1].y, mid[2].x, mid[2].y, mid[3].x, mid[3].y);
-    flow.edges.set(key, { path, out: lane(a, b, -3.5), back: lane(a, b, 3.5), ...props });
+    flow.edges.set(key, { path, out: lane(a, b, -3.5, props.shape), back: lane(a, b, 3.5, props.shape), ...props });
+  };
+  const dropFrom = (el) => {
+    if (flow.vertical) return anchor(el, true);
+    const r = el.getBoundingClientRect();
+    return { x: r.left - sr.left + 16, y: r.bottom - sr.top };
   };
 
   flow.edges.clear();
-  const you = $('[data-node="you"]');
-  const youOut = anchor(you, true);
+  const youOut = anchor(nodeEl('you'), true);
   for (const a of state.snap.agents) {
     if (a.status === 'exited') continue;
-    const el = $(`#flow-agents [data-node="agent:${CSS.escape(a.id)}"]`);
+    const el = nodeEl(`agent:${a.id}`);
     if (!el) continue;
     add(`you>${a.id}`, youOut, anchor(el, false), { agent: a.id, live: a.status === 'working', faint: !a.hasTranscript });
-    const pending = new Set(a.status === 'working' ? a.pendingTools.map(catOf) : []);
-    const cats = new Set([...Object.keys(a.toolCounts).map(catOf), ...pending]);
-    const out = anchor(el, true);
-    for (const c of cats) {
-      const tel = $(`#flow-tools [data-node="tool:${c}"]`);
-      add(`${a.id}>${c}`, out, anchor(tel, false), { agent: a.id, active: pending.has(c) });
+    for (const { owner, working } of streams(a)) {
+      const isSub = owner !== a;
+      const key = isSub ? `sub:${a.id}/${owner.id}` : a.id;
+      const from = isSub ? nodeEl(key) : el;
+      if (!from) continue;
+      if (isSub) add(`${a.id}>${key}`, dropFrom(el), anchor(from, false), { agent: a.id, live: working, shape: flow.vertical ? null : 'drop' });
+      const pending = new Set(working ? owner.pendingTools.map(catOf) : []);
+      const cats = new Set([...Object.keys(owner.toolCounts).map(catOf), ...pending]);
+      const out = anchor(from, true);
+      for (const c of cats) add(`${key}>${c}`, out, anchor(nodeEl(`tool:${c}`), false), { agent: a.id, active: pending.has(c), thin: isSub });
     }
   }
 }
+
+const nodeEl = (node) => $(`#stage [data-node="${CSS.escape(node)}"]`);
 
 function spawn(key, dir, color, delay, target) {
   if (reduceMotion) {
@@ -1016,7 +1119,7 @@ function frame() {
   for (const e of flow.edges.values()) {
     const strong = e.agent === focus;
     ctx.setLineDash(e.faint ? [2, 5] : []);
-    ctx.lineWidth = strong ? 1.6 : 1.2;
+    ctx.lineWidth = (strong ? 1.6 : 1.2) * (e.thin ? 0.75 : 1);
     ctx.strokeStyle = strong ? colors.edgeStrong : colors.edge;
     ctx.stroke(e.path);
     if (e.active || e.live) {
@@ -1061,40 +1164,63 @@ function frame() {
   requestAnimationFrame(frame);
 }
 
-// Turn new transcript events into particles, spaced out by their real timing.
-function ingestFlow(s) {
-  for (const a of s.agents) {
-    if (!a.recent.length) continue;
-    for (const e of a.recent) {
-      if (e.kind !== 'tool' || e.side || !e.ts) continue;
-      const c = catOf(e.tool), prev = flow.lastCall.get(c);
-      if (!prev || e.ts >= prev.ts) flow.lastCall.set(c, { tool: e.tool, label: e.label, ts: e.ts });
-    }
-    const top = a.recent[a.recent.length - 1].seq;
-    const last = flow.lastSeq.get(a.id);
-    flow.lastSeq.set(a.id, top);
-    if (last == null || top < last || document.hidden) continue;
-    const fresh = a.recent.filter((e) => e.seq > last && !e.side && e.kind !== 'system').slice(-14);
-    const first = fresh.length && fresh[0].ts;
-    fresh.forEach((e, i) => {
-      const delay = (e.ts && first ? Math.min(1700, Math.max(0, e.ts - first)) : i * 160) + i * 45;
-      const agentEl = () => $(`#flow-agents [data-node="agent:${CSS.escape(a.id)}"]`);
-      const toolEl = () => $(`#flow-tools [data-node="tool:${catOf(e.tool)}"]`);
-      if (e.kind === 'prompt') spawn(`you>${a.id}`, 1, 'req', delay, agentEl);
-      else if (e.kind === 'text') spawn(`you>${a.id}`, -1, 'res', delay, () => $('[data-node="you"]'));
-      else if (e.kind === 'tool') spawn(`${a.id}>${catOf(e.tool)}`, 1, 'req', delay, toolEl);
-      else if (e.kind === 'result') {
-        if (e.error) setTimeout(() => pulse(toolEl(), 'err'), delay);
-        spawn(`${a.id}>${catOf(e.tool)}`, -1, e.error ? 'err' : 'res', delay, agentEl);
-      }
-    });
+// Replays a stream's new events through `emit`, spaced out by their real timing.
+function ingestStream(key, recent, playFromStart, emit) {
+  if (!recent.length) return;
+  for (const e of recent) {
+    if (e.kind !== 'tool' || e.side || !e.ts) continue;
+    const c = catOf(e.tool), prev = flow.lastCall.get(c);
+    if (!prev || e.ts >= prev.ts) flow.lastCall.set(c, { tool: e.tool, label: e.label, ts: e.ts });
+  }
+  const top = recent[recent.length - 1].seq;
+  let last = flow.lastSeq.get(key);
+  flow.lastSeq.set(key, top);
+  if (last == null) {
+    if (!playFromStart) return;
+    last = 0;
+  }
+  if (top < last || document.hidden) return;
+  const fresh = recent.filter((e) => e.seq > last && !e.side && e.kind !== 'system').slice(-14);
+  const first = fresh.length && fresh[0].ts;
+  fresh.forEach((e, i) => emit(e, (e.ts && first ? Math.min(1700, Math.max(0, e.ts - first)) : i * 160) + i * 45));
+}
+
+// A tool call goes out on `link`; its result comes back to `home`.
+function emitTool(e, delay, link, home) {
+  const toolEl = () => nodeEl(`tool:${catOf(e.tool)}`);
+  if (e.kind === 'tool') spawn(`${link}>${catOf(e.tool)}`, 1, 'req', delay, toolEl);
+  else if (e.kind === 'result') {
+    if (e.error) setTimeout(() => pulse(toolEl(), 'err'), delay);
+    spawn(`${link}>${catOf(e.tool)}`, -1, e.error ? 'err' : 'res', delay, home);
   }
 }
 
-function select(id) {
+function ingestFlow(s) {
+  for (const a of s.agents) {
+    const parentSeen = flow.lastSeq.has(a.id);
+    const agentEl = () => nodeEl(`agent:${a.id}`);
+    ingestStream(a.id, a.recent, false, (e, delay) => {
+      if (e.kind === 'prompt') spawn(`you>${a.id}`, 1, 'req', delay, agentEl);
+      else if (e.kind === 'text') spawn(`you>${a.id}`, -1, 'res', delay, () => nodeEl('you'));
+      else emitTool(e, delay, a.id, agentEl);
+    });
+    for (const sub of a.subagents) {
+      const key = `sub:${a.id}/${sub.id}`;
+      const subEl = () => nodeEl(key);
+      // A subagent born while we watch plays from its first event: the task handed down.
+      ingestStream(key, sub.recent, parentSeen, (e, delay) => {
+        if (e.kind === 'prompt') spawn(`${a.id}>${key}`, 1, 'req', delay, subEl);
+        else if (e.kind === 'text') spawn(`${a.id}>${key}`, -1, 'res', delay, agentEl);
+        else emitTool(e, delay, key, subEl);
+      });
+    }
+  }
+}
+
+function select(id, source = '') {
   state.selected = id;
   history.replaceState(null, '', '#' + encodeURIComponent(id));
-  state.log.source = '';
+  state.log.source = source;
   render();
   if (matchMedia('(max-width: 1180px)').matches) $('#detail').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
 }
@@ -1179,7 +1305,13 @@ function buildDetail(a) {
     if (!box || String(getSelection())) return;
     box.classList.toggle('expanded');
   });
-  f('source').addEventListener('change', (e) => { state.log.source = e.target.value; syncLog(); });
+  f('source').addEventListener('change', (e) => { state.log.source = e.target.value; render(); });
+  f('subs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sub]');
+    if (!b) return;
+    state.log.source = state.log.source === b.dataset.sub ? '' : b.dataset.sub;
+    render();
+  });
   d.querySelector('[data-act="resume"]')?.addEventListener('click', async (e) => {
     const label = e.currentTarget.querySelector('span');
     const cur = currentAgent();
@@ -1285,10 +1417,15 @@ function renderDetail() {
 
   f('subs-wrap').hidden = !a.subagents.length;
   f('subs-n').textContent = String(a.subagents.length);
-  f('subs').innerHTML = a.subagents.map((s) => {
-    const fresh = a.status === 'working' && n - s.mtime < 15000;
-    return `<div class="sub">${glyph(fresh ? 'working' : 'idle')}<span class="sr-only">${fresh ? 'Working' : 'Idle'}</span>${s.type ? `<span class="type">${esc(s.type)}</span>` : ''}<span class="t" title="${esc(s.title)}">${esc(s.title)}</span><span class="since">${fmtDur(n - s.mtime)} ago</span></div>`;
-  }).join('');
+  const shown = a.subagents.slice(0, 12);
+  f('subs').innerHTML = shown.map((s) => {
+    const working = s.state === 'working';
+    const act = s.activity || {};
+    const since = working ? (act.tool ? `${esc(shortTool(act.tool))} · ${esc(shortLabel(act.label))}` : 'Thinking…') : `done ${fmtDur(n - s.lastEventAt)} ago`;
+    return `<button type="button" class="sub" data-sub="${esc(s.id)}" aria-current="${state.log.source === s.id}" title="Show this subagent's transcript">`
+      + `${glyph(working ? 'working' : 'done')}<span class="sr-only">${working ? 'Working' : 'Done'}</span>${s.type ? `<span class="type">${esc(s.type)}</span>` : ''}`
+      + `<span class="t">${esc(s.title)}</span><span class="since">${since}</span></button>`;
+  }).join('') + (a.subagents.length > shown.length ? `<p class="note">Showing the ${shown.length} most recent of ${a.subagents.length}.</p>` : '');
 
   const sel = f('source');
   sel.hidden = !a.subagents.length;

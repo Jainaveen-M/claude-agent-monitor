@@ -15,6 +15,7 @@ open http://localhost:4317
   - a failed tool call sends a red particle and the tool flashes ✕
   - a working agent has a rotating coral border, and a link to a tool that is still running shows moving dashes
   - each agent shows its current tool, events per minute, CPU and memory; click one to inspect it
+  - subagents hang under their parent with their own links to the tools they use. Their task travels down to them, and their answer travels back up to the parent. A finished subagent shows "✓ Handed back" for 2 minutes. Click one to open its transcript.
 - **Inspector.** For the selected agent:
   - session metadata: model, context size, client, start time
   - current activity, including the full command for Bash calls
@@ -25,6 +26,21 @@ open http://localhost:4317
 - **Log.** Prompts, replies, tool calls and tool results stream in as they happen. You can filter by kind, follow the newest entry, and switch to a subagent's transcript.
 - **Totals.** Running agents, combined CPU and memory, and output tokens.
 
+## Trying it with simulated agents
+
+```sh
+npm run simulate                 # dashboard with fake agents on http://localhost:4318
+node simulate.js --speed=2       # same scenario, twice as fast
+node simulate.js --no-server     # only write the files; prints the folder to point CLAUDE_CONFIG_DIR at
+```
+
+The simulator runs two sessions:
+
+- **payments-api** works in rounds. Each round spawns two subagents (Explore and general-purpose) in parallel. They use Glob, Grep, Read, Bash and an MCP tool, and each round includes a failing Read. The parent then edits files, calls WebFetch and runs tests, which fail and are fixed every other round.
+- **docs-site** fixes a link now and then and sits idle in between.
+
+It writes the same files Claude Code does, including subagent transcripts at `subagents/agent-<id>.jsonl` with their `.meta.json` files. Everything goes to a temporary folder, never to `~/.claude`, and Ctrl+C removes it. That dashboard only shows simulated agents: it skips the scan for `claude` processes with no session file (`AGENTMON_UNTRACKED=0`).
+
 ## Where the data comes from
 
 Everything is read-only and local:
@@ -33,7 +49,7 @@ Everything is read-only and local:
 |---|---|
 | `~/.claude/sessions/<pid>.json` | Which sessions are live, their busy/idle status, cwd and name |
 | `~/.claude/projects/<slug>/<sessionId>.jsonl` | Title, last prompt, current tool, model, tokens, log |
-| `~/.claude/projects/<slug>/<sessionId>/subagents/*.jsonl` | Subagent transcripts |
+| `~/.claude/projects/<slug>/<sessionId>/subagents/agent-*.jsonl` | Subagent transcripts. Their `.meta.json` gives the agent type and description |
 | `ps`, plus `lsof` on macOS or `/proc` on Linux | CPU and memory for each agent's whole process tree |
 
 The server samples every 2 seconds and pushes snapshots to the page over Server-Sent Events. Transcripts are read incrementally, so it only parses bytes appended since the last tick.
@@ -49,6 +65,7 @@ A `claude` process with no session file still appears, marked **Running**. This 
 | `PORT` | `4317` | |
 | `HOST` | `127.0.0.1` | Interface to bind to |
 | `CLAUDE_CONFIG_DIR` | `~/.claude` | Same variable Claude Code uses |
+| `AGENTMON_UNTRACKED` | `1` | `0` skips the scan for `claude` processes with no session file |
 
 ## Security
 
