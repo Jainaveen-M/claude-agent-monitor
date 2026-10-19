@@ -1,0 +1,13 @@
+{
+  "name": "claude-agent-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local dashboard for running Claude Code agents: status, current task, logs, CPU and memory.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
