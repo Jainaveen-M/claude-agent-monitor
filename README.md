@@ -9,13 +9,13 @@ open http://localhost:4317
 
 ## What it shows
 
-- **Agents list.** One card per session, showing:
-  - status: Working, Idle, Needs input or Exited
-  - title and working directory
-  - the tool it is running right now
-  - CPU and memory sparklines
-  - output tokens
-- **Detail panel.** For the selected agent:
+- **Live flow.** A diagram of you, your agents and the tools they use, with every transcript event drawn as a particle:
+  - coral particles carry work going out: your prompts and tool calls
+  - blue particles carry data coming back: tool results and Claude's replies
+  - a failed tool call sends a red particle and the tool flashes ✕
+  - a working agent has a rotating coral border, and a link to a tool that is still running shows moving dashes
+  - each agent shows its current tool, events per minute, CPU and memory; click one to inspect it
+- **Inspector.** For the selected agent:
   - session metadata: model, context size, client, start time
   - current activity, including the full command for Bash calls
   - last prompt
