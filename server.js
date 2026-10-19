@@ -26,6 +26,7 @@ const LOG_RING = 500;                    // events kept per transcript
 const MAX_INITIAL_READ = 32 * 1024 * 1024;
 const EXITED_VISIBLE_MS = 6 * 60 * 60 * 1000;
 const MAX_PROCS_PER_AGENT = 40;
+const FLOW_RECENT = 25;                 // events per agent sent for the flow view
 
 // ---------------------------------------------------------------- processes
 
@@ -176,6 +177,7 @@ class Transcript {
     this.lastEventAt = null;
     this.mtime = 0;
     this.errors = 0;
+    this.toolCounts = new Map();
   }
 
   async update() {
@@ -240,7 +242,7 @@ class Transcript {
               const name = this.toolNames.get(b.tool_use_id) || 'tool';
               this.pending.delete(b.tool_use_id);
               if (b.is_error) this.errors++;
-              this.push({ kind: 'result', ts, tool: name, error: !!b.is_error, text: clip(blockText(b.content), 800), side });
+              this.push({ kind: 'result', ts, id: b.tool_use_id, tool: name, error: !!b.is_error, text: clip(blockText(b.content), 800), side });
             }
           }
         }
@@ -272,10 +274,11 @@ class Transcript {
           } else if (b.type === 'tool_use') {
             const { label, detail } = toolSummary(b.name, b.input);
             this.toolNames.set(b.id, b.name);
+            this.toolCounts.set(b.name, (this.toolCounts.get(b.name) || 0) + 1);
             const t = { name: b.name, label, detail, ts };
             this.pending.set(b.id, t);
             if (!side) this.lastToolUse = t;
-            this.push({ kind: 'tool', ts, tool: b.name, text: label, detail, side });
+            this.push({ kind: 'tool', ts, id: b.id, tool: b.name, text: label, detail, side });
           }
         }
         break;
@@ -286,7 +289,22 @@ class Transcript {
   eventsAfter(seq) {
     return this.events.filter((e) => e.seq > seq);
   }
+
+  // Compact activity feed for the flow view.
+  flow(now) {
+    return {
+      recent: this.events.slice(-FLOW_RECENT).map((e) => ({
+        seq: e.seq, kind: e.kind, ts: e.ts, tool: e.tool, error: e.error, side: e.side,
+        label: e.kind === 'tool' ? clip(e.text, 80) : undefined,
+      })),
+      rate: this.events.filter((e) => e.ts && now - e.ts < 60000 && e.kind !== 'system').length,
+      toolCounts: Object.fromEntries(this.toolCounts),
+      pendingTools: [...this.pending.values()].map((p) => p.name),
+    };
+  }
 }
+
+const NO_FLOW = { recent: [], rate: 0, toolCounts: {}, pendingTools: [] };
 
 const transcripts = new Map(); // file -> Transcript
 const TRANSCRIPT_TTL_MS = 10 * 60 * 1000;
@@ -440,6 +458,7 @@ async function buildSnapshot() {
       processCount: tree.length,
       history: hist,
       subagents: file ? await subagentsOf(file) : [],
+      ...(t ? t.flow(now) : NO_FLOW),
     });
   }
 
@@ -480,6 +499,7 @@ async function buildSnapshot() {
       processCount: tree.length,
       history: pushHistory(id, now, cpu, rss),
       subagents: [],
+      ...NO_FLOW,
     });
   }
 
