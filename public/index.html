@@ -457,6 +457,54 @@
   .empty p { margin: 0 auto; color: var(--muted); font-size: 13.5px; max-width: 380px; }
   .empty code { font-family: var(--mono); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
 
+  /* ---------------------------------------------------------------- history */
+  .views { margin-left: 14px; }
+  .views button { padding: 4px 14px; font-size: 13px; }
+  .history { margin-top: 26px; }
+  .h-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .h-title { font-family: var(--serif); font-optical-sizing: auto; font-weight: 400; font-size: 40px; line-height: 1.08; letter-spacing: -0.02em; margin: 0; }
+  .h-sub { color: var(--muted); margin: 6px 0 0; font-size: 13.5px; }
+  .h-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .h-tools input, .h-tools select { font: inherit; font-size: 13px; background: var(--surface-raised); color: var(--text); border: 1px solid var(--border-strong); border-radius: 10px; padding: 7px 11px; max-width: 100%; }
+  .h-tools input { width: 280px; }
+  .h-tools select { width: 260px; }
+  .h-tools input:focus-visible, .h-tools select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .h-grid { display: grid; grid-template-columns: minmax(300px, 390px) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .h-list { position: sticky; top: 14px; max-height: calc(100vh - 28px); overflow: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 4px 8px 2px; scrollbar-width: thin; }
+  .h-day { font-size: 12px; font-weight: 600; color: var(--muted); margin: 10px 4px 0; }
+  .h-day:first-child { margin-top: 0; }
+  .h-row { display: block; width: 100%; text-align: left; cursor: pointer; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 11px 14px; box-shadow: var(--shadow-sm); transition: border-color .15s, box-shadow .15s; }
+  .h-row:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+  .h-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .h-row[aria-current="true"] { border-color: var(--accent-ring); box-shadow: 0 0 0 3px var(--accent-wash); background: var(--surface-raised); }
+  .hr-top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .hr-title { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hr-time { flex: none; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .hr-live { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--accent-text); background: var(--accent-wash); border-radius: 999px; padding: 0 8px 0 4px; }
+  .hr-path { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hr-meta { font-size: 12px; color: var(--text-2); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-detail { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; box-shadow: var(--shadow-sm); padding: 22px 24px 24px; min-width: 0; }
+  .h-detail .log-block { position: static; margin-top: 22px; }
+  .h-actions { display: flex; gap: 8px; flex-wrap: wrap; flex: none; }
+  .h-detail .d-stats { margin-top: 18px; }
+  .h-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 14px; margin-top: 14px; }
+  .panel-sub { border: 1px solid var(--border); border-radius: 14px; padding: 13px 15px; min-width: 0; }
+  .panel-sub h3 { margin: 0 0 10px; font-family: var(--serif); font-size: 16px; font-weight: 500; }
+  .bars { display: grid; gap: 7px; }
+  .bar-row { display: grid; grid-template-columns: 116px minmax(0, 1fr) 36px; align-items: center; gap: 10px; font-size: 12.5px; }
+  .bar-k { font-family: var(--mono); font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { height: 8px; border-radius: 99px; background: var(--accent-wash); overflow: hidden; }
+  .bar-track i { display: block; height: 100%; border-radius: 99px; background: var(--series); }
+  .bar-v { text-align: right; font-variant-numeric: tabular-nums; }
+  .h-prompts { padding: 12px 14px; margin-top: 0; }
+  .h-prompts .label { color: var(--con-faint); font-family: var(--sans); font-size: 11.5px; margin: 0 0 4px; }
+  .h-prompts .c-prompt + .label { margin-top: 10px; }
+  .h-prompts .c-prompt { margin: 0; }
+  .load-earlier { display: block; margin: 6px auto 10px; font-family: var(--sans); font-size: 12px; color: var(--con-dim); background: var(--con-raised); border: 1px solid var(--con-line); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+  .load-earlier:hover { color: var(--con-text); }
+  .load-earlier:disabled { cursor: progress; opacity: .7; }
+  .log-note { text-align: center; font-family: var(--sans); font-size: 12px; color: var(--con-faint); padding: 8px 16px 4px; }
+
   @media (prefers-reduced-motion: reduce) {
     .anode.is-working::before, .live .dot, .ev, .log.is-live .ev-tool.pending:last-child .mk, .pulse-req, .pulse-res, .pulse-err { animation: none; }
     .pulse-req { outline: 2px solid var(--req); }
@@ -470,6 +518,8 @@
     .d-grid { grid-template-columns: minmax(0, 1fr); }
     .log-block { position: static; }
     .log { height: auto; max-height: 70vh; }
+    .h-grid { grid-template-columns: minmax(0, 1fr); }
+    .h-list { position: static; max-height: 46vh; }
   }
   /* Narrow screens: the flow runs top to bottom. */
   @media (max-width: 860px) {
@@ -505,6 +555,11 @@
     .ev time { text-align: left; padding: 0; }
     .ev-prompt { margin-right: 8px; padding-left: 12px; }
     .log-tools { margin-left: 0; }
+    .views { margin-left: 0; order: 3; }
+    .h-title { font-size: 30px; }
+    .h-tools, .h-tools input, .h-tools select { width: 100%; }
+    .h-two { grid-template-columns: minmax(0, 1fr); }
+    .h-detail { padding: 18px 16px; border-radius: 18px; }
   }
 </style>
 </head>
@@ -525,6 +580,10 @@
       <span class="brand-name">Agent monitor</span>
       <span class="host" id="host"></span>
     </div>
+    <nav class="seg views" id="views" aria-label="View">
+      <button type="button" data-view="live" aria-pressed="true">Live</button>
+      <button type="button" data-view="history" aria-pressed="false">History</button>
+    </nav>
     <div class="top-right">
       <div class="live" id="conn" role="status"><span class="dot" aria-hidden="true"></span><span id="conn-text">Connecting…</span></div>
       <div class="seg" id="theme" role="group" aria-label="Theme">
@@ -535,6 +594,7 @@
     </div>
   </header>
 
+  <div id="view-live">
   <section class="hero" aria-label="Overview">
     <div class="hero-main">
       <div class="eyebrow" id="greeting">&nbsp;</div>
@@ -582,6 +642,9 @@
   </section>
 
   <section class="detail" id="detail" aria-label="Agent inspector"></section>
+  </div>
+
+  <section class="history" id="view-history" aria-label="Session history" hidden></section>
 </div>
 
 <script>
@@ -597,9 +660,18 @@ function store(key, val) {
   } catch { return null; }
 }
 
+// "#<agent>" opens the live view, "#history" or "#history/<session>" the history view.
+function parseRoute() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (h === 'history' || h.startsWith('history/')) return { view: 'history', id: h.slice(8) || null };
+  return { view: 'live', id: h || null };
+}
+const ROUTE = parseRoute();
+
 const state = {
+  view: ROUTE.view,
   snap: null,
-  selected: decodeURIComponent(location.hash.slice(1)) || null,
+  selected: ROUTE.view === 'live' ? ROUTE.id : null,
   hoverAgent: null,
   totals: [],
   lastAt: 0,
@@ -608,6 +680,14 @@ const state = {
   log: { key: null, seq: 0, loading: false, follow: true, source: '' },
   hidden: new Set(store('hidden2') || []),
   detailFor: null,
+};
+
+const hist = {
+  data: null, sig: '', error: null, loading: false,
+  q: '', project: '',
+  selected: ROUTE.view === 'history' ? ROUTE.id : null,
+  detail: null, detailFor: null,
+  log: { key: null, token: 0, firstSeq: 0, loaded: 0, source: '' },
 };
 
 // Claude Code's own spinner sequence.
@@ -654,7 +734,7 @@ function fmtWhen(t) {
 }
 function tilde(p) {
   if (!p) return '';
-  const home = state.snap && state.snap.home;
+  const home = (state.snap && state.snap.home) || (hist.data && hist.data.home);
   return home && (p === home || p.startsWith(home + '/')) ? '~' + p.slice(home.length) : p;
 }
 const now = () => (state.snap ? state.snap.now + (Date.now() - state.lastAt) : Date.now());
@@ -1111,6 +1191,8 @@ function pulse(el, kind) {
 const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2);
 
 function frame() {
+  // Nothing to draw while the flow is off screen.
+  if (state.view !== 'live') { requestAnimationFrame(frame); return; }
   const { ctx, colors } = flow;
   const t = performance.now();
   ctx.clearRect(0, 0, flow.w, flow.h);
@@ -1179,7 +1261,7 @@ function ingestStream(key, recent, playFromStart, emit) {
     if (!playFromStart) return;
     last = 0;
   }
-  if (top < last || document.hidden) return;
+  if (top < last || document.hidden || state.view !== 'live') return;
   const fresh = recent.filter((e) => e.seq > last && !e.side && e.kind !== 'system').slice(-14);
   const first = fresh.length && fresh[0].ts;
   fresh.forEach((e, i) => emit(e, (e.ts && first ? Math.min(1700, Math.max(0, e.ts - first)) : i * 160) + i * 45));
@@ -1535,6 +1617,348 @@ async function syncLog() {
   }
 }
 
+// ------------------------------------------------------------ history
+
+const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+const hf = (name) => $(`#h-detail [data-h="${name}"]`);
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const projectKey = (s) => (s.cwd ? tilde(s.cwd) : s.project);
+const fmtTime = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const currentHistory = () => hist.data && hist.data.sessions.find((s) => s.id === hist.selected);
+const narrow = () => matchMedia('(max-width: 1180px)').matches;
+
+function dayLabel(t) {
+  const startOf = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOf(new Date()) - startOf(new Date(t))) / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return new Date(t).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+}
+
+function buildHistory() {
+  $('#view-history').innerHTML = `
+    <div class="h-head">
+      <div>
+        <h1 class="h-title">Session history</h1>
+        <p class="h-sub" id="h-sub">Reading your stored sessions…</p>
+      </div>
+      <div class="h-tools">
+        <input type="search" id="h-q" placeholder="Search titles, prompts, folders" aria-label="Search sessions">
+        <select id="h-project" aria-label="Folder"><option value="">All folders</option></select>
+        <button class="btn" type="button" id="h-refresh">Refresh</button>
+      </div>
+    </div>
+    <div class="h-grid">
+      <div class="h-list" id="h-list" aria-label="Sessions"></div>
+      <section class="h-detail" id="h-detail" aria-label="Session details"></section>
+    </div>`;
+  $('#h-q').value = hist.q;
+  $('#h-q').addEventListener('input', (e) => { hist.q = e.target.value; renderHistoryList(); });
+  $('#h-project').addEventListener('change', (e) => { hist.project = e.target.value; renderHistoryList(); });
+  $('#h-refresh').addEventListener('click', () => loadHistory());
+  $('#h-list').addEventListener('click', (e) => {
+    const row = e.target.closest('.h-row');
+    if (row) selectHistory(row.dataset.id);
+  });
+}
+
+function filteredSessions() {
+  const q = hist.q.trim().toLowerCase();
+  return hist.data.sessions.filter((s) => (!hist.project || projectKey(s) === hist.project)
+    && (!q || [s.title, s.firstPrompt, s.lastPrompt, s.cwd, s.gitBranch, s.id].some((v) => v && v.toLowerCase().includes(q))));
+}
+
+function historyRowHtml(s) {
+  const meta = [
+    plural(s.prompts, 'prompt'),
+    plural(s.toolCalls, 'tool call'),
+    `${fmtCompact(s.outputTokens)} tokens out`,
+    s.subagents ? plural(s.subagents, 'subagent') : null,
+    s.startedAt && s.endedAt > s.startedAt ? fmtDur(s.endedAt - s.startedAt) : null,
+  ].filter(Boolean).join(' · ');
+  return `<button type="button" class="h-row" data-id="${esc(s.id)}" aria-current="${s.id === hist.selected}">
+    <div class="hr-top"><span class="hr-title">${esc(s.title)}</span>${s.live ? `<span class="hr-live">${glyph('working')}Running</span>` : ''}<span class="hr-time">${s.endedAt ? fmtTime(s.endedAt) : ''}</span></div>
+    <div class="hr-path">${esc([projectKey(s), s.gitBranch].filter(Boolean).join(' · '))}</div>
+    <div class="hr-meta">${esc(meta)}</div>
+  </button>`;
+}
+
+function renderHistoryList() {
+  const list = $('#h-list');
+  if (!list) return;
+  if (!hist.data) {
+    list.innerHTML = hist.error
+      ? `<div class="empty"><h3>Couldn't read the history</h3><p>${esc(hist.error)}</p></div>`
+      : `<div class="empty"><p>${glyph('working')} Reading your stored sessions. The first read can take a few seconds.</p></div>`;
+    return;
+  }
+  const { sessions, retentionDays } = hist.data;
+  const projects = new Map();
+  for (const s of sessions) projects.set(projectKey(s), (projects.get(projectKey(s)) || 0) + 1);
+  $('#h-sub').textContent = `${plural(sessions.length, 'session')} in ${plural(projects.size, 'folder')} · Claude Code keeps transcripts for ${retentionDays} days`;
+  const sel = $('#h-project');
+  const sig = [...projects.keys()].join('|');
+  if (sel.dataset.sig !== sig) {
+    sel.innerHTML = '<option value="">All folders</option>'
+      + [...projects].sort((a, b) => b[1] - a[1]).map(([p, n]) => `<option value="${esc(p)}">${esc(p)} (${n})</option>`).join('');
+    sel.dataset.sig = sig;
+    if (!projects.has(hist.project)) hist.project = '';
+    sel.value = hist.project;
+  }
+  const items = filteredSessions();
+  if (!items.length) {
+    list.innerHTML = '<div class="empty"><p>No sessions match.</p></div>';
+    return;
+  }
+  let html = '', day = null;
+  for (const s of items) {
+    const label = dayLabel(s.endedAt || s.startedAt);
+    if (label !== day) { html += `<div class="h-day">${esc(label)}</div>`; day = label; }
+    html += historyRowHtml(s);
+  }
+  const top = list.scrollTop;
+  list.innerHTML = html;
+  list.scrollTop = top;
+}
+
+function applyHistoryFilters() {
+  const log = hf('log');
+  if (!log) return;
+  for (const [k] of LOG_KINDS) log.classList.toggle(`hide-${k}`, state.hidden.has(k));
+  markClamps(log);
+}
+
+function buildHistoryDetail() {
+  $('#h-detail').innerHTML = `
+    <div class="d-head">
+      <div class="d-titles">
+        <div class="d-eyebrow"><span>Stored session</span><span data-h="live"></span></div>
+        <h2 class="d-title" data-h="title"></h2>
+        <div class="d-path" data-h="path"></div>
+        <div class="d-chips" data-h="chips"></div>
+      </div>
+      <div class="h-actions">
+        <button class="btn" type="button" data-h="open-live" hidden>Open in Live view</button>
+        <button class="btn" type="button" data-h="resume" title="Copy a shell command that resumes this session">${COPY_ICON}<span>Copy resume command</span></button>
+      </div>
+    </div>
+    <div class="d-stats" data-h="stats"></div>
+    <div class="h-two">
+      <div class="panel-sub"><h3>Top tools</h3><div class="bars" data-h="tools"></div></div>
+      <div class="console now h-prompts" data-h="prompts"></div>
+    </div>
+    <section class="log-block">
+      <div class="log-head">
+        <h3>Transcript</h3>
+        <div class="chips" data-h="chips-log">
+          ${LOG_KINDS.map(([k, l]) => `<button type="button" class="chip" data-kind="${k}" aria-pressed="${!state.hidden.has(k)}">${l}</button>`).join('')}
+        </div>
+        <div class="log-tools"><select data-h="source" aria-label="Transcript source" hidden></select></div>
+      </div>
+      <div class="console log" data-h="log"></div>
+    </section>`;
+  applyHistoryFilters();
+  hf('chips-log').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip');
+    if (!b) return;
+    const k = b.dataset.kind;
+    state.hidden.has(k) ? state.hidden.delete(k) : state.hidden.add(k);
+    store('hidden2', [...state.hidden]);
+    // One preference drives both transcripts.
+    for (const c of document.querySelectorAll('.chip[data-kind]')) c.setAttribute('aria-pressed', String(!state.hidden.has(c.dataset.kind)));
+    applyHistoryFilters();
+    applyLogFilters();
+  });
+  hf('source').addEventListener('change', (e) => { hist.log.source = e.target.value; loadHistoryLog(false); });
+  hf('log').addEventListener('click', (e) => {
+    if (e.target.closest('.load-earlier')) { loadHistoryLog(true); return; }
+    const clamp = e.target.closest('.clampbox.clamped');
+    if (clamp && !String(getSelection())) clamp.classList.toggle('expanded');
+  });
+  hf('open-live').addEventListener('click', () => { setView('live'); select(hist.selected); });
+  hf('resume').addEventListener('click', async (e) => {
+    const label = e.currentTarget.querySelector('span');
+    const s = currentHistory();
+    if (!s) return;
+    const cmd = `${s.cwd ? `cd ${JSON.stringify(s.cwd)} && ` : ''}claude --resume ${s.id}`;
+    try { await navigator.clipboard.writeText(cmd); label.textContent = 'Copied'; }
+    catch { label.textContent = 'Copy failed'; }
+    setTimeout(() => (label.textContent = 'Copy resume command'), 1500);
+  });
+}
+
+function renderHistoryDetail() {
+  const box = $('#h-detail');
+  if (!box) return;
+  const s = currentHistory();
+  if (!s) {
+    hist.detailFor = null;
+    box.innerHTML = !hist.data ? '' : hist.selected
+      ? '<div class="empty"><h3>Session not found</h3><p>It may have been cleaned up, or it has no prompts yet.</p></div>'
+      : '<div class="empty"><svg class="mark" aria-hidden="true"><use href="#spark-mark"/></svg><h3>Pick a session</h3><p>Choose a session to read its transcript.</p></div>';
+    return;
+  }
+  if (hist.detailFor !== s.id) { buildHistoryDetail(); hist.detailFor = s.id; }
+  const d = hist.detail && hist.detail.id === s.id ? { ...s, ...hist.detail, live: s.live } : s;
+  const subs = Array.isArray(d.subagents) ? d.subagents : [];
+
+  hf('live').innerHTML = d.live ? `<span class="pill p-working">${glyph('working')}Running now</span>` : '';
+  hf('title').textContent = d.title;
+  hf('path').textContent = projectKey(d);
+  const chips = [
+    d.model && [d.model, 'Model'],
+    d.gitBranch && [`⎇ ${d.gitBranch}`, 'Git branch'],
+    d.entrypoint && [d.entrypoint, 'Client'],
+    d.version && [`v${d.version}`, 'Claude Code version'],
+    [d.id.slice(0, 8), d.id],
+  ].filter(Boolean);
+  hf('chips').innerHTML = chips.map(([c, t]) => `<span class="chip-meta" title="${esc(t)}">${esc(c)}</span>`).join('');
+  hf('open-live').hidden = !d.live;
+
+  const stats = [
+    ['Started', d.startedAt ? `${esc(new Date(d.startedAt).toLocaleDateString([], { month: 'short', day: 'numeric' }))}<small>${esc(fmtTime(d.startedAt))}</small>` : '–'],
+    ['Time span', d.startedAt && d.endedAt ? esc(fmtDur(d.endedAt - d.startedAt) || '0s') : '–'],
+    ['Prompts', String(d.prompts)],
+    ['Tool calls', `${d.toolCalls}${d.errors ? `<small>${plural(d.errors, 'error')}</small>` : ''}`],
+    ['Output', `${fmtCompact(d.outputTokens)}<small>tokens</small>`],
+    ['Subagents', String(Array.isArray(d.subagents) ? subs.length : d.subagents || 0)],
+  ];
+  hf('stats').innerHTML = stats.map(([k, v]) => `<div class="d-stat"><div class="k">${esc(k)}</div><div class="v">${v}</div></div>`).join('');
+
+  const top = d.topTools.slice(0, 6);
+  const max = Math.max(1, ...top.map((t) => t[1]));
+  hf('tools').innerHTML = top.length
+    ? top.map(([name, count]) => `<div class="bar-row"><span class="bar-k" title="${esc(name)}">${esc(shortTool(name))}</span><span class="bar-track"><i style="width:${((count / max) * 100).toFixed(1)}%"></i></span><span class="bar-v">${count}</span></div>`).join('')
+    : '<p class="note">No tool calls in this session.</p>';
+  const prompt = (label, text) => `<div class="label">${label}</div><div class="c-prompt"><span class="gt">&gt;</span><span class="t">${esc(text)}</span></div>`;
+  hf('prompts').innerHTML = (d.firstPrompt ? prompt('First prompt', d.firstPrompt) : '')
+    + (d.lastPrompt && d.lastPrompt !== d.firstPrompt ? prompt('Last prompt', d.lastPrompt) : '');
+
+  const sel = hf('source');
+  sel.hidden = !subs.length;
+  const opts = [['', 'Main session'], ...subs.map((x) => [x.id, `Subagent: ${x.title}`.slice(0, 80)])];
+  const sig = opts.map((o) => o[0]).join('|');
+  if (sel.dataset.sig !== sig) {
+    sel.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
+    sel.dataset.sig = sig;
+  }
+  sel.value = hist.log.source;
+}
+
+async function selectHistory(id, { scroll = true } = {}) {
+  hist.selected = id;
+  hist.openedFor = id;
+  hist.detail = null;
+  hist.log.source = '';
+  history.replaceState(null, '', `#history/${encodeURIComponent(id)}`);
+  for (const row of document.querySelectorAll('.h-row')) row.setAttribute('aria-current', String(row.dataset.id === id));
+  renderHistoryDetail();
+  loadHistoryLog(false);
+  if (scroll && narrow()) $('#h-detail').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  try {
+    const r = await fetch(`/api/sessions/${encodeURIComponent(id)}`);
+    const j = await r.json();
+    if (r.ok && hist.selected === id) { hist.detail = j; renderHistoryDetail(); }
+  } catch {
+    // The list's summary is still shown.
+  }
+}
+
+// Loads the newest page of a transcript, or with `more` the page before what is shown.
+async function loadHistoryLog(more) {
+  const L = hist.log;
+  const log = hf('log');
+  if (!log || !hist.selected) return;
+  const key = `${hist.selected}|${L.source}`;
+  if (!more) {
+    L.key = key;
+    L.firstSeq = 0;
+    L.loaded = 0;
+    log.innerHTML = '<div class="log-empty">Loading transcript…</div>';
+  } else if (L.key !== key) {
+    return;
+  }
+  const btn = log.querySelector('.load-earlier');
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+  const token = ++L.token;
+  const q = new URLSearchParams({ limit: 300 });
+  if (more) q.set('before', L.firstSeq);
+  if (L.source) q.set('sub', L.source);
+  let r = null, j = {};
+  try {
+    r = await fetch(`/api/sessions/${encodeURIComponent(hist.selected)}/log?${q}`);
+    j = await r.json();
+  } catch {}
+  if (token !== L.token || L.key !== key) return;
+  if (!r || !r.ok) {
+    log.innerHTML = `<div class="log-empty">${esc(j.error || 'Could not load the transcript.')}</div>`;
+    return;
+  }
+  if (!more) log.innerHTML = '';
+  log.querySelector('.load-earlier, .log-note')?.remove();
+  const batch = document.createElement('div');
+  appendEvents(batch, j.events);
+  const height = log.scrollHeight, scrollTop = log.scrollTop;
+  log.prepend(...batch.childNodes);
+  L.loaded += j.events.length;
+  if (j.events.length) L.firstSeq = j.events[0].seq;
+  if (j.hasMore) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'load-earlier';
+    b.textContent = `Load earlier messages (${j.total - L.loaded} more)`;
+    log.prepend(b);
+  } else if (j.truncated) {
+    log.insertAdjacentHTML('afterbegin', '<div class="log-note">This session is very long, so only its last 32 MB are shown.</div>');
+  }
+  if (!log.querySelector('.ev')) log.innerHTML = '<div class="log-empty">No messages in this transcript.</div>';
+  markClamps(log);
+  log.scrollTop = more ? scrollTop + (log.scrollHeight - height) : log.scrollHeight;
+}
+
+async function loadHistory({ quiet = false } = {}) {
+  if (hist.loading) return;
+  hist.loading = true;
+  if (!hist.data) renderHistoryList();
+  try {
+    const r = await fetch('/api/history');
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    const sig = JSON.stringify(j.sessions.map((s) => [s.id, s.endedAt, s.live, s.prompts, s.toolCalls]));
+    const changed = sig !== hist.sig;
+    Object.assign(hist, { data: j, sig, error: null });
+    if (changed || !quiet) renderHistoryList();
+    // Open the session named in the URL, or the most recent one on wide screens.
+    const target = hist.selected ? (currentHistory() ? hist.selected : null)
+      : j.sessions.length && !narrow() ? j.sessions[0].id : null;
+    if (target && hist.openedFor !== target) selectHistory(target, { scroll: false });
+    else if (changed || !quiet) renderHistoryDetail();
+  } catch {
+    hist.error = 'The dashboard server did not return the session list.';
+    if (!hist.data) renderHistoryList();
+  } finally {
+    hist.loading = false;
+  }
+}
+
+function setView(view) {
+  state.view = view;
+  $('#view-live').hidden = view !== 'live';
+  $('#view-history').hidden = view !== 'history';
+  for (const b of $('#views').children) b.setAttribute('aria-pressed', String(b.dataset.view === view));
+  const hash = view === 'history'
+    ? `#history${hist.selected ? `/${encodeURIComponent(hist.selected)}` : ''}`
+    : state.selected ? `#${encodeURIComponent(state.selected)}` : location.pathname;
+  history.replaceState(null, '', hash);
+  if (view === 'history') {
+    if (!$('#h-list')) buildHistory();
+    renderHistoryList();
+    loadHistory({ quiet: !!hist.data });
+  } else {
+    render();
+  }
+}
+
 // ------------------------------------------------------------ wiring
 
 function render() {
@@ -1560,7 +1984,7 @@ function connect() {
     state.lastAt = Date.now();
     state.connected = true;
     recordTotals(state.snap);
-    render();
+    if (state.view === 'live') render();
     ingestFlow(state.snap);
     renderConn();
   });
@@ -1587,8 +2011,22 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors
 new ResizeObserver(() => { if (state.snap) layoutFlow(); }).observe($('#stage'));
 window.addEventListener('resize', () => { if (state.snap) renderDetail(); });
 document.fonts && document.fonts.ready.then(() => { if (state.snap) layoutFlow(); });
+$('#views').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (b && b.dataset.view !== state.view) setView(b.dataset.view);
+});
+window.addEventListener('hashchange', () => {
+  const r = parseRoute();
+  if (r.view === 'history' && r.id && r.id !== hist.selected) { hist.selected = r.id; hist.openedFor = null; }
+  if (r.view === 'live' && r.id) state.selected = r.id;
+  setView(r.view);
+});
+// Keep the list current while it is on screen; only new bytes are read.
+setInterval(() => { if (state.view === 'history' && !document.hidden) loadHistory({ quiet: true }); }, 20000);
+
 setInterval(renderConn, 1000);
 requestAnimationFrame(frame);
+setView(state.view);
 connect();
 </script>
 </body>

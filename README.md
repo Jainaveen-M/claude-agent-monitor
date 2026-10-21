@@ -25,6 +25,13 @@ open http://localhost:4317
   - its subagents
 - **Log.** Prompts, replies, tool calls and tool results stream in as they happen. You can filter by kind, follow the newest entry, and switch to a subagent's transcript.
 - **Totals.** Running agents, combined CPU and memory, and output tokens.
+- **History.** Open it with the History switch in the header. It lists every session Claude Code still has on disk, grouped by day, with search and a folder filter. Each row shows the title, folder, git branch, prompts, tool calls, output tokens, subagents and time span; running sessions are marked. Pick one to see:
+  - its first and last prompt, and a chart of the tools it used most
+  - its full transcript in the same viewer as the inspector, newest first, with **Load earlier** for long sessions
+  - its subagents' transcripts
+  - the **Copy resume command** button
+
+  Links like `#history/<session-id>` open a session directly. Claude Code deletes transcripts after `cleanupPeriodDays` (30 by default, set in `~/.claude/settings.json`), so that is as far back as history goes.
 
 ## Trying it with simulated agents
 
@@ -53,6 +60,8 @@ Everything is read-only and local:
 | `ps`, plus `lsof` on macOS or `/proc` on Linux | CPU and memory for each agent's whole process tree |
 
 The server samples every 2 seconds and pushes snapshots to the page over Server-Sent Events. Transcripts are read incrementally, so it only parses bytes appended since the last tick.
+
+History reads every stored transcript the first time you open it, which takes a few seconds for about 100 MB. After that it only reads what was appended, so refreshes are near-instant. It skips Claude Code's request-log lines, which are large and not shown anywhere.
 
 The CPU figure counts 100% as one full core. It is measured from the change in CPU time between samples, so it reflects the last 2 seconds rather than a long-run average.
 

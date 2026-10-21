@@ -139,6 +139,10 @@ function blockText(content) {
   return content.map((b) => (b.type === 'text' ? b.text : b.type === 'image' ? '[image]' : '')).filter(Boolean).join('\n');
 }
 
+// Request-log lines are large and carry nothing the dashboard shows.
+const REQUEST_LOG = Buffer.from('{"type":"api-request');
+const isRequestLog = (line) => line.subarray(0, REQUEST_LOG.length).equals(REQUEST_LOG);
+
 function clip(s, n) {
   if (!s) return '';
   s = String(s);
@@ -160,9 +164,11 @@ function toolSummary(name, input = {}) {
 
 class Transcript {
   // `own` marks a subagent transcript, whose lines are all sidechain lines.
-  constructor(file, own = false) {
+  // `ring` caps the events kept; the history view keeps them all.
+  constructor(file, own = false, ring = LOG_RING) {
     this.file = file;
     this.own = own;
+    this.ring = ring;
     this.offset = 0;
     this.leftover = Buffer.alloc(0);
     this.seq = 0;
@@ -187,7 +193,7 @@ class Transcript {
     let st;
     try { st = await fsp.stat(this.file); } catch { return; }
     this.mtime = st.mtimeMs;
-    if (st.size < this.offset) Object.assign(this, new Transcript(this.file, this.own));
+    if (st.size < this.offset) Object.assign(this, new Transcript(this.file, this.own, this.ring));
     if (st.size === this.offset) return;
     let start = this.offset;
     let skipFirst = false;
@@ -206,7 +212,7 @@ class Transcript {
         data = data.subarray(nl + 1);
         if (first && skipFirst) { first = false; continue; }
         first = false;
-        if (line.length) this.ingest(line.toString('utf8'));
+        if (line.length && !isRequestLog(line)) this.ingest(line.toString('utf8'));
       }
       this.leftover = Buffer.from(data);
     } finally {
@@ -217,7 +223,7 @@ class Transcript {
   push(ev) {
     ev.seq = ++this.seq;
     this.events.push(ev);
-    if (this.events.length > LOG_RING) this.events.shift();
+    if (this.events.length > this.ring) this.events.shift();
   }
 
   ingest(line) {
@@ -388,6 +394,235 @@ async function subagentsOf(transcriptFile, parentAlive, now) {
     });
   }
   return result.sort((a, b) => b.lastEventAt - a.lastEventAt);
+}
+
+// ---------------------------------------------------------------- history
+
+const HISTORY_PAGE = 300;                 // transcript events per page in the history view
+const FULL_TRANSCRIPTS_KEPT = 4;          // fully parsed transcripts cached for the history view
+const SESSION_ID = /^[\w-]+$/;
+const SUB_ID = /^[\w.-]+(\/[\w.-]+)?$/;
+
+// Facts about one stored session, kept current by reading only bytes appended since last time.
+class SessionSummary {
+  constructor(file) {
+    this.file = file;
+    this.id = path.basename(file, '.jsonl');
+    this.own = file.includes(`${path.sep}subagents${path.sep}`);
+    this.reset();
+  }
+
+  reset() {
+    Object.assign(this, {
+      offset: 0, mtime: 0, leftover: Buffer.alloc(0),
+      title: null, titleRank: 0, firstPrompt: null, lastPrompt: null,
+      cwd: null, gitBranch: null, version: null, entrypoint: null, model: null,
+      startedAt: null, endedAt: null, prompts: 0, toolCalls: 0, errors: 0,
+      outputTokens: 0, msgId: null, msgOut: 0, toolCounts: new Map(),
+    });
+  }
+
+  update() {
+    this.updating ||= this.read().finally(() => { this.updating = null; });
+    return this.updating;
+  }
+
+  async read() {
+    let st;
+    try { st = await fsp.stat(this.file); } catch { return; }
+    if (st.size === this.offset && st.mtimeMs === this.mtime) return;
+    if (st.size < this.offset) this.reset();
+    this.mtime = st.mtimeMs;
+    if (st.size === this.offset) return;
+    await new Promise((resolve, reject) => {
+      const stream = fs.createReadStream(this.file, { start: this.offset, end: st.size - 1, highWaterMark: 1 << 20 });
+      stream.on('data', (chunk) => {
+        let data = this.leftover.length ? Buffer.concat([this.leftover, chunk]) : chunk;
+        let start = 0, nl;
+        while ((nl = data.indexOf(0x0a, start)) !== -1) {
+          const line = data.subarray(start, nl);
+          start = nl + 1;
+          if (line.length && !isRequestLog(line)) this.ingest(line.toString('utf8'));
+        }
+        this.leftover = Buffer.from(data.subarray(start));
+      });
+      stream.on('end', resolve);
+      stream.on('error', reject);
+    });
+    this.offset = st.size;
+  }
+
+  ingest(line) {
+    let d;
+    try { d = JSON.parse(line); } catch { return; }
+    if (d.type === 'custom-title' && d.customTitle) this.setTitle(d.customTitle, 3);
+    else if (d.type === 'ai-title' && d.aiTitle) this.setTitle(d.aiTitle, 2);
+    else if (d.type === 'summary' && d.summary) this.setTitle(d.summary, 1);
+    if (d.isSidechain && !this.own) return;
+    if (d.type !== 'user' && d.type !== 'assistant') return;
+    const ts = d.timestamp ? Date.parse(d.timestamp) : null;
+    if (ts) { this.startedAt ??= ts; this.endedAt = ts; }
+    if (d.cwd) this.cwd = d.cwd;
+    if (d.gitBranch) this.gitBranch = d.gitBranch;
+    if (d.version) this.version = d.version;
+    if (d.entrypoint) this.entrypoint = d.entrypoint;
+    const m = d.message || {};
+    if (d.type === 'user') {
+      if (d.isMeta) return;
+      const c = m.content;
+      if (Array.isArray(c) && c.some((b) => b.type === 'tool_result')) {
+        this.errors += c.filter((b) => b.type === 'tool_result' && b.is_error).length;
+        return;
+      }
+      const text = cleanUserText(blockText(c));
+      if (!text) return;
+      this.prompts++;
+      this.firstPrompt ??= clip(text, 240);
+      this.lastPrompt = clip(text, 240);
+      return;
+    }
+    if (m.model && m.model !== '<synthetic>') this.model = m.model;
+    // One message is written as several lines, one per content block, repeating its usage.
+    const out = (m.usage && m.usage.output_tokens) || 0;
+    if (m.id && m.id === this.msgId) {
+      if (out > this.msgOut) { this.outputTokens += out - this.msgOut; this.msgOut = out; }
+    } else {
+      this.msgId = m.id;
+      this.msgOut = out;
+      this.outputTokens += out;
+    }
+    for (const b of Array.isArray(m.content) ? m.content : []) {
+      if (b.type !== 'tool_use') continue;
+      this.toolCalls++;
+      this.toolCounts.set(b.name, (this.toolCounts.get(b.name) || 0) + 1);
+    }
+  }
+
+  setTitle(title, rank) {
+    if (rank >= this.titleRank) { this.title = title; this.titleRank = rank; }
+  }
+
+  toJSON() {
+    return {
+      id: this.id,
+      title: this.title || this.firstPrompt || 'Untitled session',
+      firstPrompt: this.firstPrompt,
+      lastPrompt: this.lastPrompt,
+      cwd: this.cwd,
+      project: path.basename(path.dirname(this.file)),
+      gitBranch: this.gitBranch,
+      version: this.version,
+      entrypoint: this.entrypoint,
+      model: this.model,
+      startedAt: this.startedAt,
+      endedAt: this.endedAt,
+      prompts: this.prompts,
+      toolCalls: this.toolCalls,
+      errors: this.errors,
+      outputTokens: this.outputTokens,
+      topTools: [...this.toolCounts].sort((a, b) => b[1] - a[1]).slice(0, 8),
+      size: this.offset,
+    };
+  }
+}
+
+const summaries = new Map();              // transcript file -> SessionSummary
+function summaryFor(file) {
+  if (!summaries.has(file)) summaries.set(file, new SessionSummary(file));
+  return summaries.get(file);
+}
+
+let scanning = null;
+function scanHistory() {
+  scanning ||= (async () => {
+    const seen = new Set();
+    let dirs = [];
+    try { dirs = await fsp.readdir(PROJECTS_DIR, { withFileTypes: true }); } catch {}
+    for (const d of dirs) {
+      if (!d.isDirectory()) continue;
+      let files = [];
+      try { files = await fsp.readdir(path.join(PROJECTS_DIR, d.name)); } catch {}
+      for (const f of files) {
+        if (!f.endsWith('.jsonl')) continue;
+        const file = path.join(PROJECTS_DIR, d.name, f);
+        seen.add(file);
+        await summaryFor(file).update();
+      }
+    }
+    for (const file of summaries.keys()) {
+      if (!seen.has(file) && !file.includes(`${path.sep}subagents${path.sep}`)) summaries.delete(file);
+    }
+  })().finally(() => { scanning = null; });
+  return scanning;
+}
+
+async function retentionDays() {
+  try {
+    const settings = JSON.parse(await fsp.readFile(path.join(CLAUDE_DIR, 'settings.json'), 'utf8'));
+    if (Number.isFinite(settings.cleanupPeriodDays)) return settings.cleanupPeriodDays;
+  } catch {}
+  return 30;
+}
+
+const liveSessionIds = () => new Set((lastSnapshot ? lastSnapshot.agents : []).filter((a) => a.status !== 'exited').map((a) => a.sessionId));
+
+async function historyList() {
+  await scanHistory();
+  const live = liveSessionIds();
+  const sessions = [];
+  for (const sum of summaries.values()) {
+    if (sum.own || !sum.prompts) continue;
+    const subs = await listSubagentFiles(path.join(sum.file.replace(/\.jsonl$/, ''), 'subagents'));
+    sessions.push({ ...sum.toJSON(), subagents: subs.length, live: live.has(sum.id) });
+  }
+  sessions.sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0));
+  return { now: Date.now(), home: os.homedir(), retentionDays: await retentionDays(), sessions };
+}
+
+async function sessionDetail(file) {
+  const sum = summaryFor(file);
+  await sum.update();
+  const dir = path.join(file.replace(/\.jsonl$/, ''), 'subagents');
+  const subagents = [];
+  for (const rel of await listSubagentFiles(dir)) {
+    const full = path.join(dir, rel);
+    const s = summaryFor(full);
+    await s.update();
+    let meta = {};
+    try { meta = JSON.parse(await fsp.readFile(full.replace(/\.jsonl$/, '.meta.json'), 'utf8')); } catch {}
+    subagents.push({
+      id: rel.replace(/\.jsonl$/, ''),
+      type: meta.agentType || null,
+      title: meta.description || s.firstPrompt || rel,
+      startedAt: s.startedAt, endedAt: s.endedAt, toolCalls: s.toolCalls, errors: s.errors,
+    });
+  }
+  subagents.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0));
+  return { ...sum.toJSON(), subagents, live: liveSessionIds().has(sum.id) };
+}
+
+// The history view pages through whole transcripts, so it keeps every event.
+const fullTranscripts = new Map();
+function fullTranscriptFor(file) {
+  let t = fullTranscripts.get(file);
+  if (t) fullTranscripts.delete(file);
+  else t = new Transcript(file, file.includes(`${path.sep}subagents${path.sep}`), Infinity);
+  fullTranscripts.set(file, t);
+  for (const key of fullTranscripts.keys()) {
+    if (fullTranscripts.size <= FULL_TRANSCRIPTS_KEPT) break;
+    fullTranscripts.delete(key);
+  }
+  return t;
+}
+
+async function sessionLog(file, { before, limit }) {
+  const t = fullTranscriptFor(file);
+  await t.update();
+  const older = before ? t.events.filter((e) => e.seq < before) : t.events;
+  const events = older.slice(-limit);
+  let size = 0;
+  try { size = (await fsp.stat(file)).size; } catch {}
+  return { total: t.events.length, events, hasMore: older.length > events.length, truncated: size > MAX_INITIAL_READ };
 }
 
 // ---------------------------------------------------------------- snapshot
@@ -629,7 +864,7 @@ const server = http.createServer(async (req, res) => {
     let file = entry.file;
     const sub = url.searchParams.get('sub');
     if (sub) {
-      if (!/^[\w.-]+(\/[\w.-]+)?$/.test(sub) || sub.split('/').includes('..')) return sendJson(res, 400, { error: 'bad subagent id' });
+      if (!SUB_ID.test(sub) || sub.split('/').includes('..')) return sendJson(res, 400, { error: 'bad subagent id' });
       file = path.join(entry.file.replace(/\.jsonl$/, ''), 'subagents', `${sub}.jsonl`);
     }
     const t = transcriptFor(file);
@@ -638,6 +873,27 @@ const server = http.createServer(async (req, res) => {
     // A reset transcript restarts its sequence; tell the client to start over.
     const reset = after > t.seq;
     return sendJson(res, 200, { seq: t.seq, reset, events: t.eventsAfter(reset ? 0 : after) });
+  }
+
+  if (url.pathname === '/api/history') return sendJson(res, 200, await historyList());
+
+  const h = url.pathname.match(/^\/api\/sessions\/([^/]+)(\/log)?$/);
+  if (h) {
+    const id = decodeURIComponent(h[1]);
+    if (!SESSION_ID.test(id)) return sendJson(res, 400, { error: 'bad session id' });
+    const file = await findTranscript(id, null);
+    if (!file) return sendJson(res, 404, { error: 'no stored transcript for this session' });
+    if (!h[2]) return sendJson(res, 200, await sessionDetail(file));
+    let target = file;
+    const sub = url.searchParams.get('sub');
+    if (sub) {
+      if (!SUB_ID.test(sub) || sub.split('/').includes('..')) return sendJson(res, 400, { error: 'bad subagent id' });
+      target = path.join(file.replace(/\.jsonl$/, ''), 'subagents', `${sub}.jsonl`);
+      if (!fs.existsSync(target)) return sendJson(res, 404, { error: 'no such subagent' });
+    }
+    const before = Number(url.searchParams.get('before')) || 0;
+    const limit = Math.min(Number(url.searchParams.get('limit')) || HISTORY_PAGE, 2000);
+    return sendJson(res, 200, await sessionLog(target, { before, limit }));
   }
 
   res.writeHead(404);
