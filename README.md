@@ -1,11 +1,34 @@
-# Claude agent monitor
+# Claude Code agent monitor
 
-A local dashboard for every Claude Code session running on this machine. It shows each session's status, current task, live log, and CPU and memory use. It has no dependencies; Node 18 or later is enough.
+A local dashboard for every Claude Code session on your machine. It shows each session's status, current task, tools, subagents, live transcript and CPU and memory use, plus a searchable history of past sessions. It has no dependencies.
+
+![Live flow: agents, subagents and the tools they use](screenshots/1-live-flow.png)
 
 ```sh
-npm start            # or: node server.js
-open http://localhost:4317
+npx claude-code-agent-monitor --open
 ```
+
+Or install it once:
+
+```sh
+npm install -g claude-code-agent-monitor
+claude-code-agent-monitor --open
+```
+
+It needs macOS or Linux, Node 18 or later, and Claude Code, whose session files it reads from `~/.claude`.
+
+This is an unofficial community tool, not made by or affiliated with Anthropic.
+
+## Options
+
+| Option | |
+|---|---|
+| `--port <n>` | Port to listen on. Default `4317` |
+| `--open` | Open the dashboard in your browser |
+| `--version` | Print the version |
+| `--help` | Show help |
+
+To run it from a clone of this repo instead: `npm start`.
 
 ## What it shows
 
@@ -32,21 +55,6 @@ open http://localhost:4317
   - the **Copy resume command** button
 
   Links like `#history/<session-id>` open a session directly. Claude Code deletes transcripts after `cleanupPeriodDays` (30 by default, set in `~/.claude/settings.json`), so that is as far back as history goes.
-
-## Trying it with simulated agents
-
-```sh
-npm run simulate                 # dashboard with fake agents on http://localhost:4318
-node simulate.js --speed=2       # same scenario, twice as fast
-node simulate.js --no-server     # only write the files; prints the folder to point CLAUDE_CONFIG_DIR at
-```
-
-The simulator runs two sessions:
-
-- **payments-api** works in rounds. Each round spawns two subagents (Explore and general-purpose) in parallel. They use Glob, Grep, Read, Bash and an MCP tool, and each round includes a failing Read. The parent then edits files, calls WebFetch and runs tests, which fail and are fixed every other round.
-- **docs-site** fixes a link now and then and sits idle in between.
-
-It writes the same files Claude Code does, including subagent transcripts at `subagents/agent-<id>.jsonl` with their `.meta.json` files. Everything goes to a temporary folder, never to `~/.claude`, and Ctrl+C removes it. That dashboard only shows simulated agents: it skips the scan for `claude` processes with no session file (`AGENTMON_UNTRACKED=0`).
 
 ## Where the data comes from
 

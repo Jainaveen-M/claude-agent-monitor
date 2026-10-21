@@ -1,14 +1,42 @@
 {
-  "name": "claude-agent-monitor",
+  "name": "claude-code-agent-monitor",
   "version": "0.1.0",
-  "private": true,
-  "description": "Local dashboard for running Claude Code agents: status, current task, logs, CPU and memory.",
+  "description": "Unofficial local dashboard for Claude Code: watch every running session, its tools and subagents live, and browse your session history.",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "agents",
+    "subagents",
+    "dashboard",
+    "monitor",
+    "cli"
+  ],
+  "license": "MIT",
+  "author": "Jainaveen M",
+  "homepage": "https://github.com/Jainaveen-M/claude-agent-monitor#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jainaveen-M/claude-agent-monitor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Jainaveen-M/claude-agent-monitor/issues"
+  },
+  "bin": {
+    "claude-code-agent-monitor": "server.js"
+  },
   "main": "server.js",
+  "files": [
+    "server.js",
+    "public/"
+  ],
   "scripts": {
-    "start": "node server.js",
-    "simulate": "node simulate.js"
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ]
 }

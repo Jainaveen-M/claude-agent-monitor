@@ -14,8 +14,45 @@ const fsp = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 const { execFile } = require('node:child_process');
+const pkg = require('./package.json');
 
-const PORT = Number(process.env.PORT) || 4317;
+// ---------------------------------------------------------------- command line
+
+const USAGE = `Usage: claude-code-agent-monitor [options]
+
+A local dashboard for your Claude Code sessions: live flow, transcripts, history.
+
+Options:
+  --port <n>   port to listen on (default 4317, or $PORT)
+  --open       open the dashboard in your browser
+  --version    print the version
+  --help       show this help
+
+Environment: PORT, HOST, CLAUDE_CONFIG_DIR, AGENTMON_UNTRACKED. See the README.`;
+
+const args = process.argv.slice(2);
+const KNOWN = ['--port', '--open', '--version', '--help', '-v', '-h'];
+for (const a of args) {
+  if (a.startsWith('-') && !KNOWN.includes(a.split('=')[0])) {
+    console.error(`Unknown option: ${a}\n\n${USAGE}`);
+    process.exit(1);
+  }
+}
+const flag = (name) => {
+  const i = args.findIndex((a) => a === `--${name}` || a.startsWith(`--${name}=`));
+  if (i < 0) return undefined;
+  if (args[i].includes('=')) return args[i].slice(args[i].indexOf('=') + 1);
+  return args[i + 1] && !args[i + 1].startsWith('-') ? args[i + 1] : true;
+};
+if (flag('help') || args.includes('-h')) { console.log(USAGE); process.exit(0); }
+if (flag('version') || args.includes('-v')) { console.log(pkg.version); process.exit(0); }
+const portArg = flag('port');
+if (portArg !== undefined && !/^\d+$/.test(String(portArg))) {
+  console.error('--port needs a number, for example --port 4400');
+  process.exit(1);
+}
+
+const PORT = Number(portArg || process.env.PORT) || 4317;
 const HOST = process.env.HOST || '127.0.0.1';
 const CLAUDE_DIR = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
 const SESSIONS_DIR = path.join(CLAUDE_DIR, 'sessions');
@@ -900,9 +937,18 @@ const server = http.createServer(async (req, res) => {
   res.end('not found');
 });
 
+server.on('error', (err) => {
+  console.error(err.code === 'EADDRINUSE'
+    ? `Port ${PORT} is already in use. Is the monitor already running? Try --port ${PORT + 1}.`
+    : `Could not start the server: ${err.message}`);
+  process.exit(1);
+});
+
 server.listen(PORT, HOST, () => {
-  console.log(`Agent monitor running at http://localhost:${PORT}`);
+  const url = `http://localhost:${PORT}`;
+  console.log(`Agent monitor running at ${url}`);
   console.log(`Reading ${SESSIONS_DIR} and ${PROJECTS_DIR}`);
+  if (flag('open')) execFile(process.platform === 'darwin' ? 'open' : 'xdg-open', [url], () => {});
 });
 
 tick();
