@@ -1,6 +1,6 @@
 {
   "name": "claude-code-agent-monitor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Unofficial local dashboard for Claude Code: watch every running session, its tools and subagents live, and browse your session history.",
   "keywords": [
     "claude",
