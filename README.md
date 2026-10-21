@@ -2,7 +2,9 @@
 
 A local dashboard for every Claude Code session on your machine. It shows each session's status, current task, tools, subagents, live transcript and CPU and memory use, plus a searchable history of past sessions. It has no dependencies.
 
-![Live flow: agents, subagents and the tools they use](screenshots/1-live-flow.png)
+![The dashboard in dark mode: totals, the live flow of agents, subagents and tools, and the inspector](screenshots/2-dashboard-dark.png)
+
+[▶ Watch the 30-second demo](screenshots/agent-monitor-demo.mp4) (recorded with simulated agents)
 
 ```sh
 npx claude-code-agent-monitor --open
@@ -32,29 +34,55 @@ To run it from a clone of this repo instead: `npm start`.
 
 ## What it shows
 
-- **Live flow.** A diagram of you, your agents and the tools they use, with every transcript event drawn as a particle:
-  - coral particles carry work going out: your prompts and tool calls
-  - blue particles carry data coming back: tool results and Claude's replies
-  - a failed tool call sends a red particle and the tool flashes ✕
-  - a working agent has a rotating coral border, and a link to a tool that is still running shows moving dashes
-  - each agent shows its current tool, events per minute, CPU and memory; click one to inspect it
-  - subagents hang under their parent with their own links to the tools they use. Their task travels down to them, and their answer travels back up to the parent. A finished subagent shows "✓ Handed back" for 2 minutes. Click one to open its transcript.
-- **Inspector.** For the selected agent:
-  - session metadata: model, context size, client, start time
-  - current activity, including the full command for Bash calls
-  - last prompt
-  - CPU and memory charts for the last 3 minutes, also viewable as a table
-  - the process tree, including the tools and MCP servers it spawned
-  - its subagents
-- **Log.** Prompts, replies, tool calls and tool results stream in as they happen. You can filter by kind, follow the newest entry, and switch to a subagent's transcript.
-- **Totals.** Running agents, combined CPU and memory, and output tokens.
-- **History.** Open it with the History switch in the header. It lists every session Claude Code still has on disk, grouped by day, with search and a folder filter. Each row shows the title, folder, git branch, prompts, tool calls, output tokens, subagents and time span; running sessions are marked. Pick one to see:
-  - its first and last prompt, and a chart of the tools it used most
-  - its full transcript in the same viewer as the inspector, newest first, with **Load earlier** for long sessions
-  - its subagents' transcripts
-  - the **Copy resume command** button
+### Live flow
 
-  Links like `#history/<session-id>` open a session directly. Claude Code deletes transcripts after `cleanupPeriodDays` (30 by default, set in `~/.claude/settings.json`), so that is as far back as history goes.
+![Live flow: an agent with two subagents at work, linked to the tools they use](screenshots/1-live-flow.png)
+
+A diagram of you, your agents and the tools they use, with every transcript event drawn as a particle:
+
+- coral particles carry work going out: your prompts and tool calls
+- blue particles carry data coming back: tool results and Claude's replies
+- a failed tool call sends a red particle and the tool flashes ✕
+- a working agent has a rotating coral border, and a link to a tool that is still running shows moving dashes
+- each agent shows its current tool, events per minute, CPU and memory; click one to inspect it
+- subagents hang under their parent with their own links to the tools they use. Their task travels down to them, and their answer travels back up to the parent. A finished subagent shows "✓ Handed back" for 2 minutes. Click one to open its transcript.
+
+Above the flow, totals show how many agents are running and their combined CPU, memory and output tokens.
+
+### Inspector and transcript
+
+![Inspector: stats, current activity, CPU and memory charts, and a subagent's transcript](screenshots/3-inspector.png)
+
+Click any agent or subagent to inspect it:
+
+- session metadata: model, context size, client, start time
+- current activity, including the full command for Bash calls, and the last prompt
+- CPU and memory charts for the last 3 minutes, also viewable as a table
+- the process tree, including the tools and MCP servers it spawned
+- its subagents, each opening its own transcript
+- a live transcript styled like Claude Code's terminal: prompts, replies, and tool calls with their output nested underneath, errors in red. Filter it by kind, follow the newest entry, or switch to a subagent.
+
+### Session history
+
+<p>
+  <img src="screenshots/4-history-light.png" alt="Session history in light mode" width="49%">
+  <img src="screenshots/5-history-dark.png" alt="Session history in dark mode" width="49%">
+</p>
+
+Other projects' names are replaced with sample text in these screenshots.
+
+Open it with the **History** switch in the header. It lists every session Claude Code still has on disk, grouped by day, with search and a folder filter. Each row shows the title, folder, git branch, prompts, tool calls, output tokens, subagents and time span, and running sessions are marked. Pick one to see:
+
+- its first and last prompt, and a chart of the tools it used most
+- its full transcript in the same viewer as the inspector, newest first, with **Load earlier** for long sessions
+- its subagents' transcripts
+- the **Copy resume command** button
+
+Links like `#history/<session-id>` open a session directly. Claude Code deletes transcripts after `cleanupPeriodDays` (30 by default, set in `~/.claude/settings.json`), so that is as far back as history goes.
+
+### Themes and small screens
+
+Light, dark, or follow your system, from the switch in the header. On a phone the flow runs top to bottom.
 
 ## Where the data comes from
 

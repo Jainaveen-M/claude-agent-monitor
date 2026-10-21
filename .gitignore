@@ -1,0 +1,6 @@
+.DS_Store
+node_modules/
+*.tgz
+
+# Raw macOS screenshots can hold private details; commit edited copies instead.
+screenshots/Screenshot *
